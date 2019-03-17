@@ -30,7 +30,6 @@ export default class Calendar extends Component {
   };
 
   handleSelectSlot = ({ start, end, resourceId, ...rest }) => {
-    console.log('jjj rest', rest);
     this.setState({
       isCreateEventModalOpen: true,
       pendingEvent: {
@@ -39,11 +38,6 @@ export default class Calendar extends Component {
         resourceId,
       },
     });
-    // this.addNewEventToDB({
-    //     start: moment(start).format('YYYY-MM-DDtHH:mm'),
-    //     end: moment(end).format('YYYY-MM-DDtHH:mm'),
-    //     title: 'newestEvent',
-    // })
   };
 
   handleCloseModal = () => {
@@ -59,6 +53,7 @@ export default class Calendar extends Component {
         pendingEvent: {
           ...currentState.pendingEvent,
           ...values,
+          title: values.playerOne,
         },
       }),
       () => {
@@ -78,7 +73,6 @@ export default class Calendar extends Component {
     });
 
     const updateState = (events) => {
-      console.log('jjj events', events);
       this.setState({
         events,
       });
@@ -86,7 +80,6 @@ export default class Calendar extends Component {
   };
 
   formatEventsForCalendar = (unformattedEvents) => {
-    console.log('jjj format rawEvents', unformattedEvents);
     const formattedEvents = unformattedEvents.map(({ start, end, ...rest }) => {
       return {
         start: new Date(moment(start)),
@@ -94,7 +87,6 @@ export default class Calendar extends Component {
         ...rest,
       };
     });
-    console.log('jjj format formattedEvents', formattedEvents);
     return formattedEvents;
   };
 
@@ -103,16 +95,13 @@ export default class Calendar extends Component {
     this.db
       .collection('events')
       .add(event)
-      .then(function(docRef) {
-        console.log('Document written with ID: ', docRef.id);
-      })
+      .then(function(docRef) {})
       .catch(function(error) {
         console.error('Error adding document: ', error);
       });
   };
 
   onEventResize = ({ start, end, event }) => {
-    console.log(event);
     this.db
       .collection('events')
       .doc(event.id)
@@ -121,16 +110,9 @@ export default class Calendar extends Component {
         end: moment(end).format('YYYY-MM-DDtHH:mm'),
         resourceId: event.resourceId,
       });
-    // this.setState(state => {
-    //     state.events[0].start = start;
-    //     state.events[0].end = end;
-    //     return { events: state.events };
-    // });
   };
 
-  onEventDrop = ({ event, start, end, allDay }) => {
-    console.log(start);
-  };
+  onEventDrop = ({ event, start, end, allDay }) => {};
 
   mockPlayers = [
     {
@@ -144,20 +126,9 @@ export default class Calendar extends Component {
   ];
 
   render() {
-    console.log('jjj this.state.events', this.state.events);
     const localizer = BigCalendar.momentLocalizer(moment);
     const Calendar = withDragAndDrop(BigCalendar);
 
-    // const Modal = <Overlay isOpen={true} />
-    // const eventList = {
-    //     events: [
-    //     {
-    //         start: new Date(),
-    //         end: new Date(moment().add(1, "days")),
-    //         title: "Some title",
-    //     }
-    //     ]
-    // };
     return (
       <div>
         <Dialog

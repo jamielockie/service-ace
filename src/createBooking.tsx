@@ -54,7 +54,6 @@ export interface ICreateBookingProps {
 }
 
 export const CreateBooking = (props: ICreateBookingProps) => {
-  console.log('jjj props', props);
   return (
     <div>
       <h1>Book</h1>
@@ -66,7 +65,6 @@ export const CreateBooking = (props: ICreateBookingProps) => {
         }}
         // validationSchema={SignupSchema}
         onSubmit={(values) => {
-          console.log('jjj values', values);
           // same shape as initial values
           props.onSubmitBooking(values);
         }}
