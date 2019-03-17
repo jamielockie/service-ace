@@ -1,8 +1,14 @@
-import React from "react";
-import * as Yup from "yup";
-import { withFormik, FormikProps, FormikErrors, Form, Field } from "formik";
-
-import { Classes } from "@blueprintjs/core";
+import React from 'react';
+import * as Yup from 'yup';
+import {
+  Formik,
+  FormikProps,
+  FormikErrors,
+  Form,
+  Field,
+  FieldProps,
+} from 'formik';
+import { Radio, RadioGroup } from '@blueprintjs/core';
 
 // Shape of form values
 interface FormValues {
@@ -14,69 +20,161 @@ interface OtherProps {
   message: string;
 }
 
-// Aside: You may see InjectedFormikProps<OtherProps, FormValues> instead of what comes below in older code.. InjectedFormikProps was artifact of when Formik only exported a HoC. It is also less flexible as it MUST wrap all props (it passes them through).
-const InnerForm = (props: OtherProps & FormikProps<FormValues>) => {
-  const { touched, errors, isSubmitting, message } = props;
+const SignupSchema = Yup.object().shape({
+  type: Yup.string().matches(/(singles|doubles)/),
+  playerOne: Yup.string()
+    .min(2, 'Too Short!')
+    .max(50, 'Too Long!')
+    .required('Required'),
+  playerTwo: Yup.string()
+    .min(2, 'Too Short!')
+    .max(50, 'Too Long!')
+    .required('Required'),
+  playerThree: Yup.string()
+    .email('Invalid email')
+    .required('Required'),
+});
+
+export interface IPlayer {
+  name: string;
+  id: number;
+}
+
+export interface IFormValues {
+  type: string;
+  playerOne: string;
+  playerTwo: string;
+  playerThree?: string;
+  playerFour?: string;
+}
+
+export interface ICreateBookingProps {
+  players: IPlayer[];
+  onSubmitBooking(formValues: IFormValues): void;
+}
+
+export const CreateBooking = (props: ICreateBookingProps) => {
+  console.log('jjj props', props);
   return (
-    <Form>
-      <h1>{message}</h1>
-      <Field
-        type="email"
-        name="email"
-        className={`${Classes.INPUT} .bp3-intent-warning`}
+    <div>
+      <h1>Book</h1>
+      <Formik
+        initialValues={{
+          type: 'singles',
+          playerOne: '',
+          playerTwo: '',
+        }}
+        // validationSchema={SignupSchema}
+        onSubmit={(values) => {
+          console.log('jjj values', values);
+          // same shape as initial values
+          props.onSubmitBooking(values);
+        }}
+        render={({ errors, touched, values }) => (
+          <Form>
+            <Field
+              name="type"
+              component={({ field, form }: FieldProps) => (
+                <RadioGroup
+                  onChange={(e) =>
+                    form.setFieldValue('type', e.currentTarget.value)
+                  }
+                  selectedValue={field.value}
+                >
+                  <Radio label="Singles" value="singles" />
+                  <Radio label="Doubles" value="doubles" />
+                </RadioGroup>
+              )}
+            />
+            {errors.type && touched.type ? <div>{errors.type}</div> : null}
+            <Field
+              name="playerOne"
+              component={({ field, form }: FieldProps) => (
+                <div className="bp3-select">
+                  <select
+                    value={field.value}
+                    onChange={(e) =>
+                      form.setFieldValue('playerOne', e.currentTarget.value)
+                    }
+                  >
+                    <option selected>Choose a player...</option>
+                    {props.players.map((p) => (
+                      <option value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            />
+            <Field
+              name="playerTwo"
+              component={({ field, form }: FieldProps) => (
+                <div className="bp3-select">
+                  <select
+                    value={field.value}
+                    onChange={(e) =>
+                      form.setFieldValue('playerTwo', e.currentTarget.value)
+                    }
+                  >
+                    <option selected>Choose a player...</option>
+                    {props.players.map((p) => (
+                      <option value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            />
+            {values.type === 'doubles' && (
+              <React.Fragment>
+                <Field
+                  name="playerThree"
+                  component={({ field, form }: FieldProps) => (
+                    <div className="bp3-select">
+                      <select
+                        value={field.value}
+                        onChange={(e) =>
+                          form.setFieldValue(
+                            'playerThree',
+                            e.currentTarget.value,
+                          )
+                        }
+                      >
+                        <option selected>Choose a player...</option>
+                        {props.players.map((p) => (
+                          <option value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                />
+                <Field
+                  name="playerFour"
+                  component={({ field, form }: FieldProps) => (
+                    <div className="bp3-select">
+                      <select
+                        value={field.value}
+                        onChange={(e) =>
+                          form.setFieldValue(
+                            'playerFour',
+                            e.currentTarget.value,
+                          )
+                        }
+                      >
+                        <option selected>Choose a player...</option>
+                        {props.players.map((p) => (
+                          <option value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                />
+              </React.Fragment>
+            )}
+            <button type="submit">Submit</button>
+          </Form>
+        )}
       />
-      {touched.email && errors.email && <div>{errors.email}</div>}
-
-      <Field type="password" name="password" />
-      {touched.password && errors.password && <div>{errors.password}</div>}
-
-      <button type="submit" disabled={isSubmitting}>
-        Submit
-      </button>
-    </Form>
+    </div>
   );
 };
 
-// The type of props MyForm receives
-interface MyFormProps {
-  initialEmail?: string;
-  message: string; // if this passed all the way through you might do this or make a union type
-}
-
-// Wrap our form with the using withFormik HoC
-const MyForm = withFormik<MyFormProps, FormValues>({
-  // Transform outer props into form values
-  mapPropsToValues: props => {
-    return {
-      email: props.initialEmail || "",
-      password: ""
-    };
-  },
-
-  // Add a custom validation function (this can be async too!)
-  validate: (values: FormValues) => {
-    let errors: any = {};
-    if (!values.email) {
-      errors.email = "Required";
-    }
-    // else if (!isValidEmail(values.email)) {
-    //   errors.email = 'Invalid email address';
-    // }
-    return errors;
-  },
-
-  handleSubmit: values => {
-    // do submitting things
-  }
-})(InnerForm);
-
-// Use <MyForm /> wherevs
-const Basic = () => (
-  <div>
-    <h1>My App</h1>
-    <p>This can be anywhere in your application</p>
-    <MyForm message="Sign up" />
-  </div>
-);
-
-export default Basic;
+export default CreateBooking;
